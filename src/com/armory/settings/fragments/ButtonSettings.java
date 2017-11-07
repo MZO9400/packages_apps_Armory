@@ -49,6 +49,7 @@ import com.android.settings.SettingsPreferenceFragment;
 import com.android.settings.preference.CustomSeekBarPreference;
 
 import com.android.internal.logging.nano.MetricsProto;
+import com.android.internal.util.gzosp.DeviceUtils;
 
 public class ButtonSettings extends SettingsPreferenceFragment implements
         Preference.OnPreferenceChangeListener{
@@ -61,6 +62,7 @@ public class ButtonSettings extends SettingsPreferenceFragment implements
     private static final String KEY_MENU_PRESS = "hardware_keys_menu_press";
     private static final String KEY_MENU_LONG_PRESS = "hardware_keys_menu_long_press";
     private static final String KEY_ENABLE_HW_KEYS = "enable_hw_keys";
+    private static final String KEYS_SHOW_NAVBAR_KEY = "navigation_bar_show";
 
     // category keys
     private static final String CATEGORY_HOME = "home_key";
@@ -97,6 +99,7 @@ public class ButtonSettings extends SettingsPreferenceFragment implements
     private ListPreference mBacklightTimeout;
     private CustomSeekBarPreference mButtonBrightness;
     private SwitchPreference mEnableHwKeys;
+    private SwitchPreference mEnableNavBar;
 
     private Handler mHandler;
 
@@ -133,6 +136,9 @@ public class ButtonSettings extends SettingsPreferenceFragment implements
 
         mEnableHwKeys =
                 (SwitchPreference) findPreference(KEY_ENABLE_HW_KEYS);
+
+        mEnableNavBar =
+                (SwitchPreference) prefScreen.findPreference(KEYS_SHOW_NAVBAR_KEY);
 
         if (hasHomeKey) {
             int defaultLongPressAction = res.getInteger(
@@ -202,11 +208,18 @@ public class ButtonSettings extends SettingsPreferenceFragment implements
                 mEnableHwKeys.setChecked((Settings.System.getInt(getContentResolver(),
                         Settings.System.ENABLE_HW_KEYS, 1) == 1));
                 mEnableHwKeys.setOnPreferenceChangeListener(this);
+
+            boolean showNavBarDefault = DeviceUtils.deviceSupportNavigationBar(getActivity());
+            boolean showNavBar = Settings.System.getInt(resolver,
+                        Settings.System.NAVIGATION_BAR_SHOW, showNavBarDefault ? 1:0) == 1;
+            mEnableNavBar.setChecked(showNavBar);
             }
         } else {
             prefScreen.removePreference(mButtonBrightness);
             prefScreen.removePreference(mBacklightTimeout);
             prefScreen.removePreference(mEnableHwKeys);
+            prefScreen.removePreference(mEnableNavBar);
+
         }
     }
 
@@ -264,6 +277,11 @@ public class ButtonSettings extends SettingsPreferenceFragment implements
             Settings.System.putInt(getActivity().getContentResolver(),
                     Settings.System.ENABLE_HW_KEYS, value ? 1 : 0);
             return true;
+        } else if (preference == mEnableNavBar) {
+	    boolean checked = ((SwitchPreference)mEnableNavBar).isChecked();
+            Settings.System.putInt(getActivity().getContentResolver(),
+                    Settings.System.NAVIGATION_BAR_SHOW, checked ? 1:0);
+	    return true;
         }
         return false;
     }
